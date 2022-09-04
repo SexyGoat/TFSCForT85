@@ -29,8 +29,11 @@
 ; potentiometer) and outputs 25kHz PWM signals for controlling
 ; the speed of a 4-wire fan (or two).
 ;
-; The analogue input should be between 0V and AREF (pin 5), which
-; is usually the same voltage as VDD but may be lower.
+; The analogue input should be between 0V and VDD (+5V). If a lower
+; reference voltage is requried, set UPB_POTREF to 1 and connect the
+; potentiometer reference voltage to pin AREF (pin 5). The default
+; setting is for VDD to make it convenient to experiment with the
+; project while the programmer is still plugged in, powering the MCU.
 ;
 ; A bonus feature is the ability to read the temperature reported
 ; by a single DS18B20 digital thermometer. If communication with
@@ -58,9 +61,9 @@
 ; PIN ASSIGNMENT
 ;               ____
 ;      ~RESET 1| AT |8 VDD           A DS1811 Reset Controller is recommended.
-;     THERMIO 2|tiny|7 POT
+;     THERMIO 2|tiny|7 POT           THERMIO requires a 4.7k pull-up.
 ;    FANBCTRL 3| 85 |6 FANACTRL
-;         GND 4|____|5 POTREF        THERMIO requires a 4.7k pull-up.
+;         GND 4|____|5 POTREF        POTREF is disabled by default.
 ;
 ;-----------------------------------------------------------------------------
 ; Notes
@@ -210,7 +213,9 @@ UPB_THERMIO = UPB('B', 3)   ; 2:PB3
 UPB_POT = UPB('B', 2)       ; 7:ADC1
 UPB_POTREF = UPB('B', 0)    ; Fixed at 5:AREF
 
-USE_POTREF = 1
+; Choose between using VDD or AREF as the reference voltage for the ADC.
+USE_POTREF = 0  ; Pin 5 is free for use as PB0 (or perhaps ~OC1A)
+;USE_POTREF = 1  ; Pin 5 is used as AREF
 
 ; On/off hysteresis, measured in (1/160) duty values 0..160
 ; PWM output enabled when duty ratio >= HIGH / 160
@@ -560,17 +565,16 @@ InitialiseHardware:
 ;        ldi     r16, 0x93
 ;        out     _SFR_IO_ADDR(OSCCAL), r16
 
-        ; Pause for 1000 clock cycles
-        ldi     r16, 200
-1:      adiw    Z, 0
-        dec     r16
-        brne    1b
-
 .if USE_16MHZ_CK
         ; Remember to clear (program) clock source and Start-Up Time
         ; fuses appropriately. Typical values for the Low Fuse Byte
         ; are 0xE2 for 8Mhz and 0xF1 for 16MHz.
 
+        ; Pause for 1000 clock cycles
+        ldi     r16, 200
+1:      adiw    Z, 0
+        dec     r16
+        brne    1b
         ; See if the phase-locked loop has already been started.
         in      r16, _SFR_IO_ADDR(PLLCSR)
         sbrc    r16, PLOCK
@@ -681,7 +685,7 @@ InitialiseHardware:
                   (0 << REFS2) |\
                   (USE_POTREF << REFS0) |\
                   (1 << ADLAR) |\
-                  (((0x023100 >> PBIT(UPB_POT)) & 0b0011) << MUX0) |\
+                  (((0x023100 >> (4 * PBIT(UPB_POT))) & 3) << MUX0) |\
                 0)
         out     _SFR_IO_ADDR(ADMUX), r16
         ldi     r16, (\

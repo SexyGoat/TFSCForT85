@@ -32,8 +32,11 @@ microcontroller takes an analogue input at POT (usually from a
 potentiometer) and outputs 25kHz PWM signals for controlling
 the speed of a 4-wire fan (or two).
 
-The analogue input should be between 0V and AREF (pin 5), which
-is usually the same voltage as VDD but may be lower.
+The analogue input should be between 0V and VDD (+5V). If a lower
+reference voltage is requried, set UPB_POTREF to 1 and connect the
+potentiometer reference voltage to pin AREF (pin 5). The default
+setting is for VDD to make it convenient to experiment with the
+project while the programmer is still plugged in, powering the MCU.
 
 A bonus feature is the ability to read the temperature reported
 by a single DS18B20 digital thermometer. If communication with
@@ -62,18 +65,22 @@ to avoid wiring the PWM outputs together.
 Default Pin Assignment
 ------------------------------------------------------------------------------
 
-  Pin Assignment on the ATtiny85 for 4-Wire Fan Speed Control
-
              ______                 A DS1811 Reset Controller is recommended.
     ~RESET 1|o AT  |8 VDD (+5V)     THERMIO requires a 4.7k pull-up whether
    THERMIO 2| tiny |7 POT           the DS18B20 thermometer is used or not.
-  FANBCTRL 3|  85  |6 FANBCTRL      A potentiometer is connected between GND
-       GND 4|______|5 POTREF        GND and POTREF with the wiper connection
-                                    going to POT. POTREF may be tied to VDD.
+  FANBCTRL 3|  85  |6 FANBCTRL      A linear 10kΩ potentiometer is connected
+       GND 4|______|5 (POTREF)      between GND GND and VDD with the wiper
+                                    connection going to POT.
 
 The source file may be easily modified to reassign the pins, to enable
 complementary outputs (with optional dead time generation), to alter the
 filtering and to alter the relationship between the A and B PWM outputs.
+
+By default, VDD is the reference voltage for the potentiometer input and
+the POTREF function is unused. Therefore pin 5 may be assigned a different
+function. If POTREF is to be used, it must be on Pin 5 because only Pin 5
+has the alternate function AREF. In tfsc.S, adjust UPB_POTREF to 0 or 1 as
+required.
 
 
 ------------------------------------------------------------------------------
