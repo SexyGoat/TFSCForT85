@@ -42,7 +42,7 @@ Default Pin Assignment
     ~RESET 1|o AT  |8 VDD (+5V)     THERMIO requires a 4.7k pull-up whether
    THERMIO 2| tiny |7 POT           the DS18B20 thermometer is used or not.
   FANBCTRL 3|  85  |6 FANBCTRL      A linear 10kΩ potentiometer is connected
-       GND 4|______|5 (POTREF)      between GND GND and VDD with the wiper
+       GND 4|______|5 (POTREF)      between GND and VDD with the wiper
                                     connection going to POT.
 
 The source file may be easily modified to reassign the pins, to enable
